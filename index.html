@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2d4a2d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="見分けチェック">
+<title>山菜見分けチェック</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Shippori+Mincho:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --forest:#2d4a2d; --moss:#4a7a3d; --paper:#f4eee0; --card:#fffdf7; --ink:#1a2e1a;
+  --line:#d8ceb6; --mute:#6d6a5c;
+  --red:#b3261e; --red-bg:#fdecea; --amber:#a85a00; --amber-bg:#fff1dc;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:'Noto Sans JP',system-ui,-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;
+  line-height:1.75;font-size:15px;padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #e0a100;outline-offset:2px}
+
+header{background:var(--forest);color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 12px;
+  display:flex;align-items:center;gap:10px}
+header .back{color:#cfe3c4;text-decoration:none;font-size:13px;padding:6px 4px;white-space:nowrap}
+header h1{margin:0;flex:1;text-align:center;font-family:'Shippori Mincho','Noto Serif JP',serif;
+  font-size:20px;letter-spacing:.06em;font-weight:700}
+header .sp{width:64px}
+
+main{max-width:560px;margin:0 auto;padding:14px 14px 0}
+
+.notice{border:2px solid var(--red);background:var(--red-bg);border-radius:12px;padding:10px 14px;
+  font-size:13px;color:#7b1d17;line-height:1.7}
+.notice strong{display:block;font-size:14px;color:var(--red);margin-bottom:2px}
+
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:14px}
+.panel h2{margin:0 0 4px;font-family:'Shippori Mincho','Noto Serif JP',serif;font-size:17px;color:var(--forest)}
+.panel .lead{margin:0 0 6px;font-size:13px;color:var(--mute)}
+
+fieldset{border:0;margin:14px 0 0;padding:0}
+legend{padding:0;font-weight:700;font-size:14px;color:var(--forest);margin-bottom:6px}
+legend small{font-weight:400;color:var(--mute);font-size:12px;display:block}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts label{position:relative;display:block;border:2px solid var(--line);border-radius:12px;background:#fff;
+  padding:9px 12px;font-size:14px;line-height:1.45;cursor:pointer;user-select:none}
+.opts label.on{border-color:var(--forest);background:#e9f1e2;font-weight:700}
+.opts input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.opts label:focus-within{outline:3px solid #e0a100;outline-offset:2px}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:50px;padding:10px 12px;
+  border-radius:12px;border:2px solid var(--forest);background:#fff;color:var(--forest);font-weight:700;
+  font-size:15px;cursor:pointer;text-align:center;user-select:none;width:100%}
+.btn.go{margin-top:16px;background:var(--moss);border-color:var(--moss);color:#fff;font-size:17px;min-height:56px}
+.btn.ghost{margin-top:10px;min-height:44px;font-size:14px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+
+/* 結果 */
+.verdict{border-radius:14px;padding:14px 16px;margin-top:14px;border:2px solid var(--line);background:var(--card)}
+.verdict .tag{font-size:12px;font-weight:700;margin-bottom:2px}
+.verdict .name{font-family:'Shippori Mincho','Noto Serif JP',serif;font-size:22px;line-height:1.4;font-weight:700;margin:0}
+.verdict .sub{font-size:13px;margin-top:6px}
+.verdict.cand{border-color:#c98a00;background:#fffaf0} .verdict.cand .tag{color:var(--amber)}
+.verdict.none{border-color:#777;background:#f3f1ec} .verdict.none .tag{color:#555}
+.verdict.toxic{border-color:var(--red);background:var(--red-bg)} .verdict.toxic .tag,.verdict.toxic .name{color:var(--red)}
+
+.block{margin-top:14px;border-radius:12px;background:var(--card);border:1px solid var(--line);padding:12px 14px}
+.block h3{margin:0 0 6px;font-size:14px;color:var(--forest)}
+.cands{margin:0;padding:0;list-style:none}
+.cand{padding:10px 0;border-top:1px solid var(--line)}
+.cand:first-child{border-top:0;padding-top:2px}
+.cand .top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.cand .nm{font-weight:700;font-size:16px}
+.cand .fit{margin-left:auto;font-size:12px;color:var(--mute)}
+.chip{font-size:11px;font-weight:700;border-radius:20px;padding:1px 9px;border:1px solid}
+.chip.red{color:var(--red);border-color:var(--red);background:var(--red-bg)}
+.chip.amb{color:var(--amber);border-color:var(--amber);background:var(--amber-bg)}
+.meter{display:flex;gap:3px;margin:6px 0}
+.meter i{flex:1;height:7px;border-radius:4px;background:#e8e0cc}
+.meter i.f{background:var(--moss)} .meter.t i.f{background:var(--red)}
+.cand p{margin:4px 0 0;font-size:13px;color:#444;line-height:1.7}
+.cand p.ok{color:#2f6b3a} .cand p.ng{color:var(--amber)}
+.cand p.chk{background:#f3f6fb;border:1px solid #c9d6ea;border-radius:8px;padding:6px 10px;color:#1d3f7a}
+
+.alerts{margin-top:14px}
+.alerts>h3{margin:0 0 8px;font-size:15px;color:var(--red);font-family:'Shippori Mincho','Noto Serif JP',serif}
+.alert{background:#fff;border:1px solid var(--line);border-left:8px solid var(--red);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.alert.amb{border-left-color:#d98a00}
+.alert .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.alert .hd b{font-size:16px}
+.alert .hd .em{font-size:22px}
+.alert p{margin:4px 0 0;font-size:13px;line-height:1.7}
+.alert .w{color:var(--red);font-weight:700}
+.alert .src{font-size:11px;color:var(--mute);margin-top:4px}
+
+.final{margin-top:14px;background:var(--forest);color:#fff;border-radius:12px;padding:12px 16px;font-size:13px}
+.final b{display:block;font-size:14px;margin-bottom:4px}
+.final ol{margin:0;padding-left:20px}
+.warn{margin-top:14px;border:2px solid var(--amber);background:var(--amber-bg);border-radius:12px;padding:12px 14px;font-size:14px}
+.warn b{display:block;margin-bottom:2px}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="https://tsurughi2999-alt.github.io/sansai-test-01/">‹ 山菜手帳</a>
+  <h1>山菜見分けチェック</h1>
+  <span class="sp"></span>
+</header>
+
+<main>
+  <div class="notice" role="note">
+    <strong>この結果だけで食べないでください</strong>
+    このアプリは、写真は見ません。あなたの答えをもとに、候補と似た毒草を並べるだけです。答えが間違っていれば、結果も間違います。
+  </div>
+
+  <section class="panel" aria-labelledby="h-q">
+    <h2 id="h-q">見つけたものを教えてください</h2>
+    <p class="lead">わかる範囲で選んでください。「形」と「場所」は必須です。</p>
+    <p class="lead">素手で葉をもんだり、口に入れたりしないでください。毒草は、触れただけで害になるものもあります。</p>
+    <div id="qs"></div>
+    <button class="btn go" id="btnGo" disabled>絞り込む</button>
+    <button class="btn ghost" id="btnReset" type="button">選びなおす</button>
+  </section>
+
+  <section id="result" aria-live="polite"></section>
+</main>
+
+<script type="application/json" id="danger-db">[{"id":101,"name":"トリカブト","emoji":"💜","danger":"猛毒","similar":["ニリンソウ","ヨモギ","セリ","シドケ（モミジガサ）"],"desc":"日本最強クラスの毒草。アルカロイド系毒素（アコニチン）を含み、誤食すると心臓麻痺を起こす。根・葉・茎すべてに毒がある。","howToDistinguish":"ニリンソウとの区別：葉の切れ込みが深くギザギザ。花は紫色の特徴的な兜形（ニリンソウは白い花びら状）。葉をこすると独特の嫌な臭い。","region":"山地・高山の湿った斜面","season":"葉は春〜夏、花は夏〜秋","warning":"採取厳禁。触れるだけでも皮膚吸収の危険性あり。"},{"id":102,"name":"ドクウツギ","emoji":"🍒","danger":"猛毒","similar":["アケビ","木の実全般"],"desc":"ドクゼリ・トリカブトと並ぶ日本三大毒草のひとつ。赤黒い実が甘そうに見えるが猛毒。コリアミルチンを含み死亡例あり。","howToDistinguish":"アケビとの区別：葉が対生（アケビは互生）。実が房状に密集。茎は緑色で稜がある。","region":"山地・川沿い・崩壊地","season":"実は夏〜秋（赤→黒に変化）","warning":"実を絶対に食べない。子供が誤食しやすいため注意。"},{"id":103,"name":"ドクゼリ","emoji":"🌿","danger":"猛毒","similar":["セリ","ミツバ","ウド"],"desc":"セリに非常によく似た猛毒植物。シクトキシンを含み、誤食すると痙攣・呼吸困難を引き起こす。根が特に毒性が強い。","howToDistinguish":"セリとの区別：根を切ると空洞（節状の横隔壁がある竹のような構造）。茎が太く中空。葉は大型で光沢がある。セリの根は白い細根が多く香りが強い。","region":"湿地・水辺・水田周辺","season":"春〜夏","warning":"水辺のセリ採取は根の確認必須。根ごと抜いて断面を必ず確認。"},{"id":104,"name":"スイセン","emoji":"🌼","danger":"有毒","similar":["ノビル","ニラ"],"desc":"球根・葉・花すべてに毒（リコリン）を含む。ノビルやニラと葉が非常に似ており誤食事故が多発。毎年被害報告がある。","howToDistinguish":"ノビルとの区別：スイセンは葉を折っても臭いがない（ノビルはネギ臭）。球根の形状が違う（スイセンは球根が大きく白い）。葉が扁平でツヤがある。","region":"庭・公園・土手・山すそ","season":"葉は早春から（花は冬〜早春）","warning":"ノビル採取時は必ず臭いで確認。無臭ならスイセンの可能性大。"},{"id":105,"name":"イヌサフラン（コルチカム）","emoji":"🌸","danger":"猛毒","similar":["ギョウジャニンニク","ウルイ（オオバギボウシ）"],"desc":"コルヒチンを含む猛毒植物。ギョウジャニンニクやオオバギボウシと葉が酷似。近年誤食による死亡事故が増加。","howToDistinguish":"ギョウジャニンニクとの区別：葉を傷つけてもニンニク臭がしない（ギョウジャニンニクは強いニンニク臭）。葉脈が平行で光沢が強い。球根が大きい。","region":"庭・公園・山地（園芸逸出）","season":"葉は春（花は秋）","warning":"臭いで必ず確認。無臭はすべて疑うこと。"},{"id":106,"name":"ハシリドコロ","emoji":"🍃","danger":"有毒","similar":["フキノトウ","ギョウジャニンニク"],"desc":"アトロピン・スコポラミン等を含む有毒植物。早春にフキノトウと同じ場所に生えることがあり誤食事故多数。幻覚・錯乱・呼吸困難を引き起こす。","howToDistinguish":"フキノトウとの区別：葉が柔らかく大きい。独特の臭いがある。茎を折ると白い液が出る。フキノトウは苞（つぼみ）の形が独特。","region":"山地の沢沿い・湿った斜面","season":"早春（3〜4月ごろ）","warning":"フキノトウ採取時に混入注意。必ず形状を確認してから採取。"},{"id":107,"name":"ヨウシュヤマゴボウ","emoji":"🫐","danger":"有毒","similar":["山菜全般（根）"],"desc":"根・実・葉すべてに毒を含む。黒紫の実がブルーベリーに似て見え、子供の誤食が多い。大人でも根をゴボウと間違えることがある。","howToDistinguish":"ゴボウとの区別：根を切ると白く臭いが全く違う。茎が赤紫色で太い。実は黒紫色でブドウ房状。","region":"道端・空き地・林縁（帰化植物）","season":"葉は春〜夏、実は秋","warning":"見た目が美しく子供が食べやすいため特に注意。"},{"id":108,"name":"バイケイソウ","emoji":"🌿","danger":"猛毒","similar":["ギョウジャニンニク","コバイケイソウ","ウルイ（オオバギボウシ）"],"desc":"アルカロイド系毒素（ベラトルム）を含む猛毒植物。ギョウジャニンニクと春の若葉が酷似しており、北陸・東北で誤食死亡事故多数。","howToDistinguish":"ギョウジャニンニクとの区別：葉が互生で大きく広い（ギョウジャニンニクは対生で細長い）。葉を傷つけてもニンニク臭がしない。葉脈が平行で目立つ。","region":"亜高山帯・山地の湿った草地","season":"早春〜初夏","warning":"北陸の山では最重要注意植物。ギョウジャニンニク採取時は必ず臭いで確認。"},{"id":201,"name":"ツキヨタケ","emoji":"🍄","danger":"有毒","similar":["シイタケ","ヒラタケ","ムキタケ"],"desc":"日本で最も食中毒が多い毒きのこ。食後30分〜3時間ほどで、激しい嘔吐・下痢・腹痛を起こす。加熱や乾燥をしても毒は消えない。","howToDistinguish":"傘と柄のつけ根のあたりを縦に裂くと、黒っぽいシミがある（シイタケ・ヒラタケ・ムキタケにはない）。柄に短いツバ（輪の跡）があり、ひだは淡い黄白色。暗い所でひだがほのかに光ることもあるが、発光は見分けの決め手にしないこと。","region":"ブナ・ミズナラなど広葉樹の枯れ木・倒木","season":"8月〜10月","warning":"シイタケ・ヒラタケ・ムキタケと同じ場所に生えることがある。1本でも混ざると危険。必ず縦に裂いて確認する。"},{"id":202,"name":"カエンタケ","emoji":"🔥","danger":"猛毒","similar":["ベニナギナタタケ","ホウキタケ類"],"desc":"触れただけで皮膚がかぶれることがある猛毒きのこ。食べると短時間で消化器症状が出て、その後に脳神経障害や多臓器不全に進み、ごく少量でも死亡例がある。","howToDistinguish":"鮮やかな赤〜橙色で、指や炎のような形。表面はでこぼこしている。ベニナギナタタケはより細く繊細。少しでも似ていたら手を触れないこと。","region":"コナラ・ミズナラなど広葉樹林の地面（枯れ木の近く）","season":"6月〜10月","warning":"触らない・採らない・持ち帰らない。触れてしまったら石けんでよく洗い、体調に異変があればすぐ医療機関へ。"},{"id":203,"name":"ドクツルタケ","emoji":"🍄","danger":"猛毒","similar":["ハラタケ","シロオオハラタケ","ほかの白いきのこ"],"desc":"致死性の猛毒きのこ。アマトキシン類を含み、食後6〜24時間たってから嘔吐・下痢が出る。いったん回復したように見えたあと、肝臓や腎臓が壊れて死亡することがある。","howToDistinguish":"全体が純白。柄に白いスカート状のツバがあり、根元はふくらんで袋状のツボに包まれている（土の中なので掘って確認する）。ひだは白いまま（ハラタケはひだがピンク〜黒褐色になる）。","region":"針葉樹・広葉樹の林内の地面","season":"7月〜10月","warning":"白いきのこは根元まで掘り取って確認する。症状が遅れて出るため、食べてしまったら症状がなくてもすぐ受診する。"},{"id":204,"name":"クサウラベニタケ","emoji":"🍄","danger":"有毒","similar":["ホンシメジ","ウラベニホテイシメジ","ハタケシメジ"],"desc":"シメジ類と間違えやすい毒きのこ。食後30分〜数時間で、嘔吐・下痢・腹痛などを起こす。中毒の例が多い。","howToDistinguish":"成熟するとひだがピンク色になる（ホンシメジのひだは白〜クリーム色のまま）。傘は灰褐色で、柄は細長く中が空洞になりやすい（ホンシメジは柄が太くしっかり詰まっている）。","region":"広葉樹林・雑木林の地面","season":"8月〜10月","warning":"シメジ類は見た目だけで判断しない。確実でないものは採らない。"},{"id":205,"name":"ニガクリタケ","emoji":"🍄","danger":"有毒","similar":["クリタケ","ナラタケ"],"desc":"クリタケと間違えやすい毒きのこ。食べると嘔吐・下痢・腹痛を起こし、重症になることもある。","howToDistinguish":"傘が黄色っぽく、ひだは黄〜緑がかった色。クリタケの傘はレンガ色〜赤褐色。名前のとおり強い苦味があるが、味見で確かめてはいけない。","region":"広葉樹・針葉樹の枯れ木や切り株","season":"春〜晩秋","warning":"切り株に群生するクリタケ類は、傘の色を必ず確認する。"},{"id":206,"name":"スギヒラタケ","emoji":"🍄","danger":"注意","similar":["ヒラタケ"],"desc":"かつては北陸・東北で食べられていたが、2004年に急性脳症の発生が相次ぎ、特に腎臓に持病のある人で重症例があった。原因は完全には分かっておらず、現在は食べないよう呼びかけられている。","howToDistinguish":"スギなど針葉樹の倒木・切り株に群生する。白くて薄い扇形〜へら形の傘で、柄はほとんどなく、ひだが細かく密に並ぶ。","region":"スギなど針葉樹の枯れ木","season":"9月〜11月","warning":"食べる習慣があっても採らない・食べない・人にあげない。特に腎臓に持病のある人は絶対に避ける。"}]</script>
+<script>
+(function () {
+  'use strict';
+
+  var DB = JSON.parse(document.getElementById('danger-db').textContent);
+  var DANGER_ORDER = { '猛毒': 0, '有毒': 1, '注意': 2 };
+
+  /* ---------- 質問 ---------- */
+  var QUESTIONS = [
+    { id: 'f', w: 3, required: true, title: '形は？', opts: [
+      ['tree', '木の枝の先についた芽'],
+      ['coil', '地面から出た、渦巻き状の若芽'],
+      ['bud', '地面から出た、丸いつぼみ'],
+      ['basal', '根元から出る、幅の広い葉（巻いた葉も含む）'],
+      ['leek', 'ネギやニラのような、細長い葉'],
+      ['divided', '細かく分かれた葉（セリやミツバのような）'],
+      ['stem', '茎が立ち上がり、大きな葉が互い違いにつく'],
+      ['bamboo', 'タケノコのような、竹の仲間'],
+      ['fruit', '実（木やつるについている）']
+    ] },
+    { id: 'p', w: 2, required: true, title: '生えていた場所は？', opts: [
+      ['water', '水辺・湿地・田んぼのまわり'],
+      ['slope', '山の林の中や、沢沿いの斜面'],
+      ['edge', '林のふち・伐採跡・崖・河原'],
+      ['grass', '草地・土手・道ばた'],
+      ['garden', '庭・公園・集落のまわり']
+    ] },
+    { id: 's', w: 2, title: 'においは？', sub: '手で触れず、近づけて確かめる程度に。確かめていなければ、選ばないでください。', opts: [
+      ['onion', 'ネギ・ニラ・ニンニクのようなにおい'],
+      ['herb', 'セリ・ミツバのような、爽やかな香り'],
+      ['fragrant', '山菜らしい、独特の強い香り'],
+      ['none', 'ほとんどにおわない']
+    ] },
+    { id: 'b', w: 1, title: '枝や茎の表面は？', opts: [
+      ['thorn', 'とげがある'],
+      ['fluff', '綿毛や、細かい毛がある'],
+      ['smooth', 'つるっとして、毛もとげもない']
+    ] }
+  ];
+
+  /* ---------- 種類ごとの特徴（目安） ----------
+     f=形 p=場所 s=におい b=表面。配列にない項目は「決めつけない」扱い。
+     t=1 は毒草・毒きのこ（手帳の危険植物データと同じ名前）。chk=決め手の確認。 */
+  var SP = [
+    { n: 'タラノメ', f: ['tree'], p: ['edge', 'slope'], s: ['none', 'fragrant'], b: ['thorn'], chk: '枝や幹にとげがあるかを確認する。' },
+    { n: 'コシアブラ', f: ['tree'], p: ['slope', 'edge'], s: ['fragrant'], b: ['smooth'], chk: '枝や幹にとげがない。小葉が、手のひらのように5枚ほど開く。' },
+    { n: 'ワラビ', f: ['coil'], p: ['grass', 'edge'], s: ['none'], b: ['fluff', 'smooth'], chk: '茎の先が、こぶしのように曲がっている。アクが強いので、食べるときは必ずあく抜きをする。' },
+    { n: 'ゼンマイ', f: ['coil'], p: ['slope', 'water'], s: ['none'], b: ['fluff'], chk: '赤茶色の綿毛をかぶっている。食べるときは、アク抜きが必要。' },
+    { n: 'コゴミ（クサソテツ）', f: ['coil'], p: ['slope', 'water'], s: ['none'], b: ['smooth'], chk: '茎の断面にU字の溝があり、茶色の薄い皮（鱗片）がつく。' },
+    { n: 'フキノトウ', f: ['bud'], p: ['grass', 'edge', 'slope', 'garden'], s: ['fragrant'], chk: 'フキ特有の香りがするか確認する。ハシリドコロの芽が、同じ場所に混ざることがある。' },
+    { n: 'ウド', f: ['divided', 'stem'], p: ['edge', 'slope'], s: ['fragrant'], b: ['fluff'], chk: '太い茎に、羽のような複葉がつく。全体に細かい毛があり、香りが強い。' },
+    { n: 'ミツバ', f: ['divided'], p: ['slope', 'garden'], s: ['herb'], chk: '葉が3枚に分かれ、ミツバの香りがするか確認する。' },
+    { n: 'セリ', f: ['divided'], p: ['water'], s: ['herb'], chk: 'セリの香りがするか、根の形（白いひげ根）を確認する。ドクゼリと間違えやすい。' },
+    { n: 'ノビル', f: ['leek'], p: ['grass', 'garden'], s: ['onion'], chk: 'ネギのようなにおいがし、根元に丸い球根がある。においがなければ、スイセンの可能性があるので採らない。' },
+    { n: '行者ニンニク', f: ['basal'], p: ['slope'], s: ['onion'], chk: '強いニンニクのにおいがし、根元が赤紫色の鞘に包まれる。においがなければ、採らない。' },
+    { n: 'ウルイ（オオバギボウシ）', f: ['basal'], p: ['slope', 'edge', 'garden', 'grass'], s: ['none'], b: ['smooth'], chk: '葉脈が、葉の縁に沿って弧を描く。葉に縦のひだがあれば、バイケイソウの可能性があるので採らない。' },
+    { n: 'ヨシナ（シドケ）', f: ['stem'], p: ['slope'], chk: 'トリカブトの若芽と、とくに間違えやすい。経験者に実物を見てもらうまでは、採らない。' },
+    { n: 'ミズ（ウワバミソウ）', f: ['stem'], p: ['water', 'slope'], b: ['smooth'], chk: '茎がやわらかく、赤みを帯びている。湿った沢や岩場に生える。' },
+    { n: '根曲がり竹', f: ['bamboo'], p: ['slope'], chk: 'タケノコのような若い茎で、根元が曲がる竹（チシマザサ）。' },
+    { n: 'ワサビ（葉・花）', f: ['basal'], p: ['water'], chk: '清流の水辺に生える。葉をちぎると、ツンとした辛みの香りがする。' },
+    { n: 'アケビ', f: ['fruit'], p: ['edge', 'slope'], chk: 'つるに実がなる。ドクウツギの実と間違えない（葉のつき方で確認する）。' },
+
+    { n: 'トリカブト', t: 1, f: ['divided', 'stem'], p: ['slope', 'water', 'edge', 'garden'] },
+    { n: 'ドクウツギ', t: 1, f: ['fruit'], p: ['edge'] },
+    { n: 'ドクゼリ', t: 1, f: ['divided'], p: ['water'], s: ['none'] },
+    { n: 'スイセン', t: 1, f: ['leek'], p: ['garden', 'grass', 'edge'], s: ['none'] },
+    { n: 'イヌサフラン（コルチカム）', t: 1, f: ['basal', 'leek'], p: ['garden', 'slope'], s: ['none'] },
+    { n: 'ハシリドコロ', t: 1, f: ['bud', 'stem'], p: ['slope'] },
+    { n: 'ヨウシュヤマゴボウ', t: 1, f: ['stem', 'fruit'], p: ['grass', 'garden'] },
+    { n: 'バイケイソウ', t: 1, f: ['basal', 'stem'], p: ['slope'], s: ['none'] }
+  ];
+  var LABEL = {};
+  QUESTIONS.forEach(function (q) { q.opts.forEach(function (o) { LABEL[q.id + ':' + o[0]] = o[1]; }); });
+  var ATTR_NAME = { f: '形', p: '場所', s: 'におい', b: '表面' };
+
+  /* ---------- 名前の照合（手帳データ用） ---------- */
+  function toKata(s) { return s.replace(/[\u3041-\u3096]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) + 0x60); }); }
+  function nameKeys(name) {
+    var s = toKata(String(name || '')).replace(/行者ニンニク/g, 'ギョウジャニンニク');
+    var keys = [];
+    function add(k) { k = k.replace(/\s+/g, ''); if (k) keys.push(k); }
+    add(s.replace(/[（(][^）)]*[）)]/g, ''));
+    var re = /[（(]([^）)]*)[）)]/g, m;
+    while ((m = re.exec(s)) !== null) add(m[1]);
+    return keys;
+  }
+  function intersects(a, b) { for (var i = 0; i < a.length; i++) if (b.indexOf(a[i]) >= 0) return true; return false; }
+  function findToxic(name) {
+    var k = nameKeys(name);
+    for (var i = 0; i < DB.length; i++) if (intersects(k, nameKeys(DB[i].name))) return DB[i];
+    return null;
+  }
+  function lookalikesOf(name) {
+    var k = nameKeys(name);
+    return DB.filter(function (d) {
+      if (intersects(k, nameKeys(d.name))) return false;
+      return (d.similar || []).some(function (s) { return intersects(k, nameKeys(s)); });
+    });
+  }
+  function levelOf(d) { return DANGER_ORDER[d] !== undefined ? DANGER_ORDER[d] : 3; }
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* ---------- 質問の表示 ---------- */
+  var ans = {};
+  function renderQuestions() {
+    var h = '';
+    QUESTIONS.forEach(function (q) {
+      h += '<fieldset><legend>' + esc(q.title) + (q.required ? '' : '（わかれば）') +
+           (q.sub ? '<small>' + esc(q.sub) + '</small>' : '') + '</legend><div class="opts">';
+      q.opts.forEach(function (o) {
+        var on = ans[q.id] === o[0];
+        h += '<label class="' + (on ? 'on' : '') + '"><input type="radio" name="q_' + q.id + '" value="' + o[0] + '"' + (on ? ' checked' : '') + '>' + esc(o[1]) + '</label>';
+      });
+      h += '</div></fieldset>';
+    });
+    $('qs').innerHTML = h;
+  }
+  function updateGo() { $('btnGo').disabled = !(ans.f && ans.p); }
+  $('qs').addEventListener('click', function (e) {
+    var input = e.target.closest('input[type=radio]');
+    if (!input) return;
+    var id = input.name.slice(2), val = input.value;
+    // 同じものをもう一度押すと、選択を外す
+    if (ans[id] === val) { delete ans[id]; input.checked = false; } else { ans[id] = val; }
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="q_' + id + '"]'), function (i) {
+      i.parentNode.classList.toggle('on', ans[id] === i.value);
+    });
+    updateGo();
+  });
+  $('btnReset').addEventListener('click', function () {
+    ans = {}; renderQuestions(); updateGo(); $('result').innerHTML = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* ---------- 絞り込み ---------- */
+  function score(sp) {
+    var got = 0, max = 0, ok = [], ng = [];
+    QUESTIONS.forEach(function (q) {
+      var a = ans[q.id];
+      if (!a) return;
+      max += q.w;
+      var list = sp[q.id];
+      if (!list) {
+        // 決めつけない項目：毒草は満点（見落とさないため）、山菜は半分
+        got += sp.t ? q.w : q.w / 2;
+        return;
+      }
+      if (list.indexOf(a) >= 0) { got += q.w; ok.push(ATTR_NAME[q.id]); }
+      else { ng.push(ATTR_NAME[q.id]); }
+    });
+    return { ratio: max ? got / max : 0, ok: ok, ng: ng, got: got, max: max, fOk: sp.f.indexOf(ans.f) >= 0 };
+  }
+
+  function search() {
+    var rows = SP.map(function (sp) { var s = score(sp); s.sp = sp; return s; });
+    var edible = rows.filter(function (r) { return !r.sp.t && r.fOk && r.ratio >= 0.6; })
+      .sort(function (a, b) { return b.ratio - a.ratio; }).slice(0, 4);
+    var toxic = rows.filter(function (r) { return r.sp.t && r.fOk && r.ratio >= 0.6; })
+      .sort(function (a, b) { return b.ratio - a.ratio; });
+    return { edible: edible, toxic: toxic };
+  }
+
+  function meter(ratio, t) {
+    var n = Math.max(1, Math.round(ratio * 5)), h = '<div class="meter' + (t ? ' t' : '') + '" aria-hidden="true">';
+    for (var i = 0; i < 5; i++) h += '<i' + (i < n ? ' class="f"' : '') + '></i>';
+    return h + '</div>';
+  }
+
+  function render(res) {
+    var h = '', topEdible = res.edible[0], toxic = res.toxic;
+    var answered = QUESTIONS.filter(function (q) { return ans[q.id]; }).length;
+
+    // 1) 全体の見立て
+    var toxicClose = toxic.length > 0 && (!topEdible || toxic[0].ratio >= topEdible.ratio - 0.15);
+    if (!res.edible.length && !toxic.length) {
+      h += '<div class="verdict none"><div class="tag">当てはまるものが見つかりません</div>' +
+           '<p class="name">採らないでください</p>' +
+           '<div class="sub">答えと合う山菜が、このアプリの一覧にありません。一覧にない植物は、判断できません。</div></div>';
+    } else if (toxicClose) {
+      h += '<div class="verdict toxic"><div class="tag">☠️ 毒草の特徴にも当てはまります</div>' +
+           '<p class="name">' + esc(toxic.slice(0, 3).map(function (r) { return r.sp.n; }).join('・')) + ' の可能性を消せません</p>' +
+           '<div class="sub">食べないでください。経験者に実物を見てもらうまで、採らないでください。</div></div>';
+    } else {
+      h += '<div class="verdict cand"><div class="tag">候補です（決まったわけではありません）</div>' +
+           '<p class="name">' + esc(topEdible.sp.n) + ' の特徴に近い答えです</p>' +
+           '<div class="sub">下の「決め手の確認」と「似ている毒草」を、実物で確かめてください。</div></div>';
+    }
+    if (answered < 3) {
+      h += '<div class="warn"><b>答えが少ないため、候補が広めに出ています</b>においや表面も選ぶと、絞り込みやすくなります。</div>';
+    }
+
+    // 2) 候補一覧
+    var list = res.edible.concat(toxic.filter(function (r) { return res.edible.indexOf(r) < 0; }));
+    if (list.length) {
+      h += '<div class="block"><h3>当てはまる候補</h3><ul class="cands">';
+      list.forEach(function (r) {
+        var sp = r.sp, db = sp.t ? findToxic(sp.n) : null;
+        h += '<li class="cand"><div class="top"><span class="nm">' + esc(sp.n) + '</span>' +
+             (sp.t ? '<span class="chip red">☠️ ' + esc(db ? db.danger : '毒') + '</span>' : '') +
+             '<span class="fit">答えとの合い方</span></div>' + meter(r.ratio, sp.t);
+        if (r.ok.length) h += '<p class="ok">合う：' + esc(r.ok.join('・')) + '</p>';
+        if (r.ng.length) h += '<p class="ng">合わない：' + esc(r.ng.join('・')) + '</p>';
+        if (sp.chk) h += '<p class="chk">🔍 決め手の確認：' + esc(sp.chk) + '</p>';
+        h += '</li>';
+      });
+      h += '</ul></div>';
+    }
+
+    // 3) 似ている毒草・毒きのこ（手帳のデータ）
+    var seen = {}, cards = [];
+    function push(d, why) { if (d && !seen[d.name]) { seen[d.name] = 1; cards.push({ d: d, why: why }); } }
+    toxic.forEach(function (r) { push(findToxic(r.sp.n), ''); });
+    res.edible.forEach(function (r) {
+      lookalikesOf(r.sp.n).forEach(function (d) { push(d, r.sp.n + 'と間違えやすい'); });
+    });
+    cards.sort(function (a, b) { return levelOf(a.d.danger) - levelOf(b.d.danger); });
+    if (cards.length) {
+      h += '<div class="alerts"><h3>⚠️ 似ている毒草・毒きのこ</h3>';
+      cards.forEach(function (x) {
+        var d = x.d, amb = d.danger !== '猛毒';
+        h += '<div class="alert' + (amb ? ' amb' : '') + '"><div class="hd"><span class="em">' + esc(d.emoji) + '</span><b>' + esc(d.name) + '</b>' +
+             '<span class="chip ' + (amb ? 'amb' : 'red') + '">' + esc(d.danger) + '</span></div>' +
+             (x.why ? '<p style="color:var(--mute)">' + esc(x.why) + '</p>' : '') +
+             '<p>🔍 ' + esc(d.howToDistinguish) + '</p>' +
+             '<p class="w">🚨 ' + esc(d.warning) + '</p>' +
+             '<div class="src">山菜手帳の危険植物データより</div></div>';
+      });
+      h += '</div>';
+    } else if (res.edible.length) {
+      h += '<div class="block"><h3>似た種類にも注意</h3><p style="margin:0;font-size:13px">手帳のデータに、この候補と間違えやすい毒草は登録されていません。ただし「いない」という意味ではありません。</p></div>';
+    }
+
+    // 4) きのこ
+    h += '<div class="warn"><b>きのこは対象外です</b>このアプリは、きのこの見分けには使えません。食べる前に、お近くの保健所や、きのこの観察会で実物を見てもらってください。</div>';
+
+    // 5) 食べる前に
+    h += '<div class="final"><b>食べる前に、必ず</b><ol>' +
+         '<li>複数の特徴を、実物で確認する</li>' +
+         '<li>経験者に、実物を見てもらう</li>' +
+         '<li>少しでも迷ったら、採らない・食べない</li></ol></div>';
+
+    $('result').innerHTML = h;
+    $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  $('btnGo').addEventListener('click', function () { if (ans.f && ans.p) render(search()); });
+
+  renderQuestions();
+  updateGo();
+})();
+</script>
+</body>
+</html>
